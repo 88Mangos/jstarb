@@ -45,7 +45,8 @@ pub const Entry = struct {
 
     // based on Entry.type...
     //  we know what enum to use for Event.type
-    ledger: std.ArrayList(Event),
+    //  NOTE: to save memory, no ledger for resume buckets
+    ledger: ?std.ArrayList(Event),
     //  we know how to interpret this materialized view
     view: union(enum) {
         job_opening: JobOpeningInfo,
@@ -62,7 +63,7 @@ pub const Entry = struct {
 const JobOpeningInfo = struct {
     // cached information for summary statistics
     due: ?time,
-    applied_at: time,
+    applied_at: ?time,
     job_title: []const u8,
 
     state: union(enum) {
@@ -107,10 +108,9 @@ const OutreachEventInfo = struct {
     location: location,
     scheduled: ?time,
     complete: bool,
-    notes: []const u8,
 
     state: union(enum) {
-        pending: enum { LookingAt, Withdrawn, DeadlinePassed, Ignored },
+        pending: enum { LookingAt, Ignored },
 
         // Process of getting the j*b
         submitted: void,
@@ -135,7 +135,6 @@ const CoffeeChatInfo = struct {
     location: location,
     scheduled: ?time,
     complete: bool,
-    notes: []const u8,
 };
 
 //
