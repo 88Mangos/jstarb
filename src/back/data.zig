@@ -1,4 +1,6 @@
 //
+// Defining Data Structures
+//
 // Thankfully, structs are lazily declared, so we don't
 // have to declare them in dependency order.
 //
@@ -12,11 +14,11 @@ const std = @import("std");
 // MARK: Generic Data Structures: Time, Location, People
 //
 
-const time = i64; // Unix time
+pub const time = i64; // Unix time
 
-const location = []const u8; // right now, locations are just strings.
+pub const location = []const u8; // right now, locations are just strings.
 
-const Person = struct {
+pub const Person = struct {
     first_name: []const u8,
     last_name: []const u8,
     phone: ?[]const u8,
@@ -29,7 +31,7 @@ const Person = struct {
 // MARK: Entry Definition
 //
 
-const Entry = struct {
+pub const Entry = struct {
     // metadata
     id: u64,
     created_at: i64,
@@ -141,7 +143,7 @@ const CoffeeChatInfo = struct {
 // Each event corresponds to updating fields in the appropriate information struct
 //
 
-const Event = struct {
+pub const Event = struct {
     // metadata
     id: u64,
     created_at: time,
