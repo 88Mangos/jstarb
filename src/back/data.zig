@@ -38,10 +38,22 @@ pub const Entry = struct {
     tags: [][]const u8,
 
     // data
-    type: enum { JobOpening, CoffeeChat, ResumeBucket, OutreachEvent },
-    company: []const u8,
+    type: enum { JobOpening, OutreachEvent, CoffeeChat, ResumeBucket },
+    company: []struct { type: enum { Startup, BigTech, Finance, Quant }, name: []const u8 },
     link: []const u8,
     notes: []const u8,
+    location: location,
+    scheduled: ?time,
+    people: std.ArrayList(Person), // store interviewers, coffee chat people, or anyone else jotting down
+
+    // defaults to "Resume Bucket @ [company_name]" or "Coffee Chat @ [company_name]"
+    // but for events and job openings, has a specific name.
+    title: []const u8,
+
+    deadlines: ?std.ArrayList(struct {
+        due: ?time,
+        item: enum { Application, OA },
+    }), // treated as a stack
 
     // based on Entry.type...
     //  we know what enum to use for Event.type
@@ -60,11 +72,8 @@ pub const Entry = struct {
 // MARK: Job Information
 //
 
-const JobOpeningInfo = struct {
-    // cached information for summary statistics
-    due: ?time,
+pub const JobOpeningInfo = struct {
     applied_at: ?time,
-    job_title: []const u8,
 
     state: union(enum) {
         // Did not apply for the j*b yet, with corresp. reason
@@ -74,7 +83,7 @@ const JobOpeningInfo = struct {
         submitted: void,
         oa: struct {
             status: enum { Received, Complete },
-            due: ?time,
+            due: ?time, // probably want to wrap this somewhere else right?
             notes: []const u8, // about what platform, AI-allowed or not, etc.
         },
         interview: struct {
@@ -102,13 +111,7 @@ const JobOpeningInfo = struct {
 //  companies turn outreach events into whole job applications,
 //  I might just stay j*bless.
 //
-const OutreachEventInfo = struct {
-    // cached information for summary statistics
-    people: std.ArrayList(Person),
-    location: location,
-    scheduled: ?time,
-    complete: bool,
-
+pub const OutreachEventInfo = struct {
     state: union(enum) {
         pending: enum { LookingAt, Ignored },
 
@@ -125,16 +128,6 @@ const OutreachEventInfo = struct {
         attended: void,
         rejected: void,
     },
-};
-
-//
-// MARK: Coffee Chat Information
-//
-const CoffeeChatInfo = struct {
-    people: std.ArrayList(Person),
-    location: location,
-    scheduled: ?time,
-    complete: bool,
 };
 
 //
@@ -180,10 +173,8 @@ pub const Event = struct {
             // Entry.job_opening.state.interview.location = "probably remote"
             // Entry.job_opening.state.interview.scheduled = 15210
             // Entry.job_opening.state.interview.notes = "More pre-interview yap"
-            //
-            // To handle re-schedulings, just make another InterviewScheduled Event?
-            // Or should I have an InterviewReScheduled Variant?
             ,
+            InterviewReScheduled,
             InterviewDone
             // Entry.job_opening.state.interview.complete = true
             // Entry.job_opening.state.interview.notes = "Post-interview yap"

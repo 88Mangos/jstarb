@@ -8,6 +8,9 @@ fn get_week(time: i64) i64 {
     return time / seconds_per_week;
 }
 
+// get last updated time by going to ledger, events, and then grabbing the timestamp of the last item
+// if it's a resume bucket then last updated is just created_at.
+
 // function for when did I apply to this job?
 // search ledger for the applied event
 

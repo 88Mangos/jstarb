@@ -1,5 +1,6 @@
 //
 // Implementing Workflow Logic
+// TODO: from the frontend, allow every entry and event to be manually edited, which just directly edits the corresponding field.
 //
 const std = @import("std");
 const data = @import("data.zig");
@@ -63,6 +64,7 @@ pub const job_openings = struct {
         user_notes: ?[]const u8,
         // job opening specific
         job_title: []const u8,
+        due: ?data.time,
     ) !*data.Entry {
         const currtime = std.time.timestamp();
         const entryId = mgr.fresh_entry_id();
@@ -83,7 +85,7 @@ pub const job_openings = struct {
             .notes = notes,
             .ledger = std.ArrayList(data.Event),
             .view = data.job_opening{
-                .due = null,
+                .due = due,
                 .applied_at = null,
                 .job_title = job_title,
                 .state = data.pending.LookingAt,
@@ -101,30 +103,105 @@ pub const job_openings = struct {
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
 
-    pub fn apply(
+    fn new_event(
         mgr: *Manager,
-        entryId: u64,
-        new_notes: ?[]const u8,
-    ) !*data.Entry {
-        var entry = mgr.entries[entryId];
-        entry.type = data.job_opening.Applied;
-        if (new_notes) |new_notes_str| {
-            entry.notes = entry.notes ++ "\n" ++ new_notes_str;
-        }
+        currtime: data.time,
+        jo_entry: *data.Entry,
+        notes: ?[]const u8,
+        event_type: data.Event.job_opening,
+    ) !*void {
+        std.debug.assert(jo_entry.type == data.job_opening);
 
-        return &mgr.entries.items[entryId];
+        jo_entry.type == data.job_opening.Applied;
+        try jo_entry.ledger.append(data.Event{
+            .id = mgr.fresh_event_id(),
+            .created_at = currtime,
+            .entryId = jo_entry.entryId,
+            .notes = notes,
+            .type = event_type,
+        });
     }
-    pub fn receive_oa(mgr: *Manager) !*data.Entry {}
-    pub fn complete_oa(mgr: *Manager) !*data.Entry {}
-    pub fn receive_interview(mgr: *Manager) !*data.Entry {}
-    pub fn schedule_interview(mgr: *Manager) !*data.Entry {}
-    pub fn reschedule_interview(mgr: *Manager) !*data.Entry {}
-    pub fn complete_interview(mgr: *Manager) !*data.Entry {}
-    pub fn receive_offer(mgr: *Manager) !*data.Entry {}
-    pub fn accept_offer(mgr: *Manager) !*data.Entry {}
-    pub fn reject_offer(mgr: *Manager) !*data.Entry {}
-    pub fn receive_rejection(mgr: *Manager) !*data.Entry {}
-    pub fn withdraw_application(mgr: *Manager) !*data.Entry {}
+
+    pub fn apply(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !*void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.Applied);
+        jo_entry.state = data.JobOpeningInfo.state.submitted{};
+        jo_entry.applied_at = currtime;
+    }
+
+    pub fn receive_oa(
+        mgr: *Manager,
+        jo_entry: *data.Entry,
+        notes: ?[]const u8,
+        // oa-specific
+        due: ?data.time,
+    ) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.OAReceived);
+        jo_entry.state = data.JobOpeningInfo.state.submitted{};
+    }
+
+    pub fn complete_oa(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.OADone);
+    }
+
+    pub fn receive_interview(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.InterviewReceived);
+    }
+
+    pub fn schedule_interview(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.InterviewScheduled);
+    }
+
+    pub fn reschedule_interview(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.InterviewReScheduled);
+    }
+
+    pub fn complete_interview(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.InterviewDone);
+    }
+
+    pub fn receive_offer(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.OfferReceived);
+    }
+
+    pub fn accept_offer(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.OfferAccepted);
+    }
+
+    pub fn reject_offer(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.OfferRejected);
+    }
+
+    pub fn receive_rejection(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.Rejected);
+    }
+
+    pub fn withdraw_application(mgr: *Manager, jo_entry: *data.Entry, notes: ?[]const u8) !void {
+        const currtime = std.time.timestamp();
+
+        new_event(mgr, currtime, jo_entry, notes, data.Event.type.job_opening.Withdrawn);
+    }
 
     //
     // Functions that run automatically
@@ -185,17 +262,21 @@ pub const outreach_event = struct {
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
 
-    pub fn apply(mgr: *Manager) !*data.Entry {}
-    pub fn receive_oa(mgr: *Manager) !*data.Entry {}
-    pub fn complete_oa(mgr: *Manager) !*data.Entry {}
-    pub fn attend_event(mgr: *Manager) !*data.Entry {}
-    pub fn receive_rejection(mgr: *Manager) !*data.Entry {}
+    pub fn apply(mgr: *Manager) !void {}
+    pub fn receive_oa(mgr: *Manager) !void {}
+    pub fn complete_oa(mgr: *Manager) !void {}
+    pub fn attend_event(mgr: *Manager) !void {}
+    pub fn receive_rejection(mgr: *Manager) !void {}
 };
 
 //
 // MARK: Coffee Chat Namespace
 //
 pub const coffee_chats = struct {
+
+    //
+    // Instantiate a new coffee chat
+    //
     pub fn new(
         mgr: *Manager,
         company: []const u8,
@@ -224,7 +305,7 @@ pub const coffee_chats = struct {
             .company = company,
             .link = link,
             .notes = notes,
-            .ledger = null,
+            .ledger = std.ArrayList(data.Event),
             .view = data.outreach_event{
                 .people = people orelse std.ArrayList(data.Person),
                 .location = location,
@@ -236,14 +317,17 @@ pub const coffee_chats = struct {
         try mgr.entries.append(entry);
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
+
+    //
+    // Add scheduling information to existing coffee chat
+    //
     pub fn schedule(
         mgr: *Manager,
-        entryId: u64,
+        cc_entry: *data.Entry,
         loc: data.location,
         time: data.time,
         notes: ?[]const u8,
     ) !*data.Entry {
-        var cc_entry = mgr.entries[entryId];
         std.debug.assert(cc_entry.type == data.coffee_chat);
 
         const currtime = std.time.timestamp();
@@ -258,17 +342,57 @@ pub const coffee_chats = struct {
         try cc_entry.ledger.append(data.Event{
             .id = mgr.fresh_event_id(),
             .created_at = currtime,
-            .entryId = entryId,
+            .entryId = cc_entry.entryId,
             .notes = notes,
             .type = .coffee_chat.Scheduled,
         });
     }
+
+    //
+    // Schedule a new coffee chat
+    // NOTE: wraps `new` and `schedule`
+    //
+    pub fn schedule_new(
+        mgr: *Manager,
+        company: []const u8,
+        tags: [][]const u8,
+        link: []const u8,
+        user_notes: ?[]const u8,
+        // coffee chat specific
+        people: std.ArrayList(data.Person),
+        location: data.location,
+        scheduled: data.time,
+    ) !*data.Entry {
+        const entry = new(
+            mgr,
+            company,
+            tags,
+            link,
+            user_notes,
+            people,
+            location,
+            scheduled,
+        );
+
+        schedule(
+            mgr,
+            entry,
+            location,
+            scheduled,
+            null,
+        );
+
+        return entry;
+    }
+
+    //
+    // Complete a coffee chat
+    //
     pub fn complete(
         mgr: *Manager,
-        entryId: u64,
+        cc_entry: *data.Entry,
         notes: ?[]const u8,
-    ) !*data.Entry {
-        var cc_entry = mgr.entries[entryId];
+    ) !void {
         std.debug.assert(cc_entry.type == data.coffee_chat);
 
         const currtime = std.time.timestamp();
@@ -282,7 +406,7 @@ pub const coffee_chats = struct {
         try cc_entry.ledger.append(data.Event{
             .id = mgr.fresh_event_id(),
             .created_at = currtime,
-            .entryId = entryId,
+            .entryId = cc_entry.entryId,
             .notes = notes,
             .type = .coffee_chat.Scheduled,
         });
