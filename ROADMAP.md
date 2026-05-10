@@ -25,7 +25,7 @@ Here is your implementation roadmap, categorized by the core concepts and depend
 
 Before touching graphics, you must finalize the data flow.
 
-* [ ] **Define the Core Structs**: Finalize the `Entry` (parent) and `Event` (ledger) structs.
+* [X] **Define the Core Structs**: Finalize the `Entry` (parent) and `Event` (ledger) structs.
 
 
 * [ ] **SQLite Schema**: Implement **Single Table Inheritance** for entries, where different categories (Coffee Chat vs. Application) use different nullable columns.
