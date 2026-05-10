@@ -6,27 +6,25 @@ const data = @import("data.zig");
 
 pub const EntryUpdateError = error{InvalidUpdate};
 
+//
+// MARK: Manager
 // NOTE: This is probably not great for concurrency,
 //  since we'd have to lock the entries and events lists
 //  but I guess we can make this concurrent in the future.
+//
 pub const Manager = struct {
-    allocator: std.mem.Allocator,
+    arena: std.heap.ArenaAllocator,
     entries: std.ArrayList(data.Entry),
     n_entries: u64,
     n_events: u64,
-    initialized: bool,
 
-    pub fn init(self: *Manager) void {
-        if (self.initialized) return;
-        // set the number of existing entries and the number of existing events
-        self.n_entries = self.entries.len;
-        self.n_events = 0;
-        for (self.entries) |entry| {
-            if (entry.ledger) {
-                self.n_events += entry.ledger.len;
-            }
-        }
-        self.initialized = true;
+    pub fn init(child_allocator: std.mem.Allocator) Manager {
+        return .{
+            .arena = std.heap.ArenaAllocator.init(child_allocator),
+            .entries = std.ArrayList(data.Entry).init(child_allocator),
+            .n_entries = 0,
+            .n_events = 0,
+        };
     }
 
     pub fn deinit(self: *Manager) void {
@@ -54,32 +52,35 @@ pub const Manager = struct {
 };
 
 //
-// MARK: Namespaces for Entry Updates
-// NOTE: we don't really need a namespace for resume buckets,
-//  since you just submit a resume and that's that.
-//
-
-//
 // MARK: Job Opening Namespace
 //
 pub const job_openings = struct {
     pub fn new(
         mgr: *Manager,
         company: []const u8,
-        tags: ?[][]const u8,
-        link: ?[]const u8,
-        notes: ?[]const u8,
+        tags: [][]const u8,
+        link: []const u8,
+        user_notes: ?[]const u8,
         // job opening specific
         job_title: []const u8,
     ) !*data.Entry {
-        const entry = data.Entry{
-            .id = mgr.fresh_entry_id(),
-            .created_at = std.time.timestamp(),
-            .tags = tags orelse {},
+        const currtime = std.time.timestamp();
+        const entryId = mgr.fresh_entry_id();
+
+        const notes = try std.fmt.allocPrint(
+            mgr.arena.allocator(),
+            "Created at {d}: {s}",
+            .{ currtime, user_notes orelse "" },
+        );
+
+        var entry = data.Entry{
+            .id = entryId,
+            .created_at = currtime,
+            .tags = tags,
             .type = data.JobOpening,
             .company = company,
-            .link = link orelse "",
-            .notes = notes orelse "",
+            .link = link,
+            .notes = notes,
             .ledger = std.ArrayList(data.Event),
             .view = data.job_opening{
                 .due = null,
@@ -89,11 +90,30 @@ pub const job_openings = struct {
             },
         };
 
+        try entry.ledger.append(data.Event{
+            .id = mgr.fresh_event_id(),
+            .created_at = currtime,
+            .entryId = entryId,
+            .type = data.job_opening.BeginTracking,
+        });
+
         try mgr.entries.append(entry);
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
 
-    pub fn apply(mgr: *Manager) !*data.Entry {}
+    pub fn apply(
+        mgr: *Manager,
+        entryId: u64,
+        new_notes: ?[]const u8,
+    ) !*data.Entry {
+        var entry = mgr.entries[entryId];
+        entry.type = data.job_opening.Applied;
+        if (new_notes) |new_notes_str| {
+            entry.notes = entry.notes ++ "\n" ++ new_notes_str;
+        }
+
+        return &mgr.entries.items[entryId];
+    }
     pub fn receive_oa(mgr: *Manager) !*data.Entry {}
     pub fn complete_oa(mgr: *Manager) !*data.Entry {}
     pub fn receive_interview(mgr: *Manager) !*data.Entry {}
@@ -126,22 +146,31 @@ pub const outreach_event = struct {
     pub fn new(
         mgr: *Manager,
         company: []const u8,
-        tags: ?[][]const u8,
-        link: ?[]const u8,
-        notes: ?[]const u8,
+        tags: [][]const u8,
+        link: []const u8,
+        user_notes: ?[]const u8,
         // outreach event specific
         people: ?std.ArrayList(data.Person),
         location: ?data.location,
         scheduled: ?data.time,
     ) !*data.Entry {
+        const currtime = std.time.timestamp();
+        const entryId = mgr.fresh_entry_id();
+
+        const notes = try std.fmt.allocPrint(
+            mgr.arena.allocator(),
+            "Created at {d}: {s}",
+            .{ currtime, user_notes orelse "" },
+        );
+
         const entry = data.Entry{
-            .id = mgr.fresh_entry_id(),
-            .created_at = std.time.timestamp(),
-            .tags = tags orelse {},
+            .id = entryId,
+            .created_at = currtime,
+            .tags = tags,
             .type = data.OutreachEvent,
             .company = company,
-            .link = link orelse "",
-            .notes = notes orelse "",
+            .link = link,
+            .notes = notes,
             .ledger = std.ArrayList(data.Event),
             .view = data.outreach_event{
                 .people = people orelse std.ArrayList(data.Person),
@@ -170,22 +199,31 @@ pub const coffee_chats = struct {
     pub fn new(
         mgr: *Manager,
         company: []const u8,
-        tags: ?[][]const u8,
-        link: ?[]const u8,
-        notes: ?[]const u8,
+        tags: [][]const u8,
+        link: []const u8,
+        user_notes: ?[]const u8,
         // coffee chat specific
         people: ?std.ArrayList(data.Person),
         location: ?data.location,
         scheduled: ?data.time,
     ) !*data.Entry {
+        const currtime = std.time.timestamp();
+        const entryId = mgr.fresh_entry_id();
+
+        const notes = try std.fmt.allocPrint(
+            mgr.arena.allocator(),
+            "Created at {d}: {s}",
+            .{ currtime, user_notes orelse "" },
+        );
+
         const entry = data.Entry{
-            .id = mgr.fresh_entry_id(),
-            .created_at = std.time.timestamp(),
-            .tags = tags orelse {},
+            .id = entryId,
+            .created_at = currtime,
+            .tags = tags,
             .type = data.OutreachEvent,
             .company = company,
-            .link = link orelse "",
-            .notes = notes orelse "",
+            .link = link,
+            .notes = notes,
             .ledger = null,
             .view = data.outreach_event{
                 .people = people orelse std.ArrayList(data.Person),
@@ -198,8 +236,57 @@ pub const coffee_chats = struct {
         try mgr.entries.append(entry);
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
-    pub fn schedule(mgr: *Manager) !*data.Entry {}
-    pub fn complete(mgr: *Manager) !*data.Entry {}
+    pub fn schedule(
+        mgr: *Manager,
+        entryId: u64,
+        loc: data.location,
+        time: data.time,
+        notes: ?[]const u8,
+    ) !*data.Entry {
+        var cc_entry = mgr.entries[entryId];
+        std.debug.assert(cc_entry.type == data.coffee_chat);
+
+        const currtime = std.time.timestamp();
+
+        if (cc_entry.complete) {
+            std.debug.print("Cannot schedule a coffee chat that has already completed ", .{});
+            return EntryUpdateError.InvalidUpdate;
+        }
+
+        cc_entry.location = loc;
+        cc_entry.scheduled = time;
+        try cc_entry.ledger.append(data.Event{
+            .id = mgr.fresh_event_id(),
+            .created_at = currtime,
+            .entryId = entryId,
+            .notes = notes,
+            .type = .coffee_chat.Scheduled,
+        });
+    }
+    pub fn complete(
+        mgr: *Manager,
+        entryId: u64,
+        notes: ?[]const u8,
+    ) !*data.Entry {
+        var cc_entry = mgr.entries[entryId];
+        std.debug.assert(cc_entry.type == data.coffee_chat);
+
+        const currtime = std.time.timestamp();
+
+        if (cc_entry.complete) {
+            std.debug.print("Cannot complete a coffee chat that has already completed ", .{});
+            return EntryUpdateError.InvalidUpdate;
+        }
+
+        cc_entry.complete = true;
+        try cc_entry.ledger.append(data.Event{
+            .id = mgr.fresh_event_id(),
+            .created_at = currtime,
+            .entryId = entryId,
+            .notes = notes,
+            .type = .coffee_chat.Scheduled,
+        });
+    }
 };
 
 //
@@ -209,18 +296,28 @@ pub const resume_bucket = struct {
     pub fn new(
         mgr: *Manager,
         company: []const u8,
-        tags: ?[][]const u8,
-        link: ?[]const u8,
-        notes: ?[]const u8,
+        tags: [][]const u8,
+        link: []const u8,
+        user_notes: ?[]const u8,
     ) !*data.Entry {
+        const currtime = std.time.timestamp();
+        const entryId = mgr.fresh_entry_id();
+
+        const notes = try std.fmt.allocPrint(
+            mgr.arena.allocator(),
+            "Created at {d}: {s}",
+            .{ currtime, user_notes orelse "" },
+        );
         const entry = data.Entry{
-            .id = mgr.fresh_entry_id(),
-            .created_at = std.time.timestamp(),
-            .tags = tags orelse {},
+            .id = entryId,
+            .created_at = currtime,
+            .tags = tags,
             .type = data.OutreachEvent,
             .company = company,
-            .link = link orelse "",
-            .notes = notes orelse "",
+            .link = link,
+            .notes = notes,
+
+            // no ledger necessary for resume buckets
             .ledger = null,
             .view = data.resume_bucket{},
         };
@@ -229,6 +326,7 @@ pub const resume_bucket = struct {
         return &mgr.entries.items[mgr.entries.items.len - 1];
     }
 };
+
 //
 // MARK: Tests for Actions
 //  Using the testing.allocator we can simulate the frontend sending payloads over

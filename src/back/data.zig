@@ -147,6 +147,7 @@ pub const Event = struct {
     id: u64,
     created_at: time,
     entryId: u64,
+    notes: []const u8,
 
     // data, with corresp. Entry fields to update, using 15210 as a placeholder time
     type: union(enum) {
