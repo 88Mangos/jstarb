@@ -1,0 +1,237 @@
+//
+// Thankfully, structs are lazily declared, so we don't
+// have to declare them in dependency order.
+//
+// TODO: to avoid memory leaks after the storage reader
+// loads in the data, we tag all structs that contain
+// allocatables with a `deinit` method.
+//
+const std = @import("std");
+
+//
+// MARK: Generic Data Structures: Time, Location, People
+//
+
+const time = i64; // Unix time
+
+const location = []const u8; // right now, locations are just strings.
+
+const Person = struct {
+    first_name: []const u8,
+    last_name: []const u8,
+    phone: ?[]const u8,
+    email: ?[]const u8,
+    company: ?[]const u8,
+    notes: []const u8,
+};
+
+//
+// MARK: Entry Definition
+//
+
+const Entry = struct {
+    // metadata
+    id: u64,
+    created_at: i64,
+    tags: [][]const u8,
+
+    // data
+    type: enum { JobOpening, CoffeeChat, ResumeBucket, OutreachEvent },
+    company: []const u8,
+    link: []const u8,
+    notes: []const u8,
+
+    // based on Entry.type...
+    //  we know what enum to use for Event.type
+    ledger: std.ArrayList(Event),
+    //  we know how to interpret this materialized view
+    view: union(enum) {
+        job_opening: JobOpeningInfo,
+        outreach_event: OutreachEventInfo,
+        coffee_chat: CoffeeChatInfo,
+        resume_bucket: void, // parent Entry contains everything we need (company, link, notes)
+    },
+};
+
+//
+// MARK: Job Information
+//
+
+const JobOpeningInfo = struct {
+    // cached information for summary statistics
+    due: ?time,
+    applied_at: time,
+    job_title: []const u8,
+
+    state: union(enum) {
+        // Did not apply for the j*b yet, with corresp. reason
+        pending: enum { LookingAt, Withdrawn, DeadlinePassed, Ignored },
+
+        // Process of getting the j*b
+        submitted: void,
+        oa: struct {
+            status: enum { Received, Complete },
+            due: ?time,
+            notes: []const u8, // about what platform, AI-allowed or not, etc.
+        },
+        interview: struct {
+            people: std.ArrayList(Person),
+            location: ?location,
+            scheduled: ?time,
+            complete: bool,
+            notes: []const u8,
+            // identical to coffee_chat anonymous struct, except also has a type
+            type: enum { Behavioral, Technical, General },
+        },
+
+        // Post j*b offer, with appropriate status
+        offer: enum { Received, Accepted, Rejected },
+
+        // Bad things, which we will not manifest
+        noOffer: enum { Rejected, Ghosted },
+    },
+};
+
+//
+// MARK: Outreach Event Information
+//
+const OutreachEventInfo = struct {
+    // cached information for summary statistics
+    people: std.ArrayList(Person),
+    location: location,
+    scheduled: ?time,
+    complete: bool,
+    notes: []const u8,
+
+    state: union(enum) {
+        pending: enum { LookingAt, Withdrawn, DeadlinePassed, Ignored },
+
+        // Process of getting the j*b
+        submitted: void,
+
+        oa: struct {
+            status: enum { Received, Complete },
+            due: ?time,
+            notes: []const u8, // about what platform, AI-allowed or not, etc.
+        },
+        attended: void,
+        rejected: void,
+    },
+};
+
+// To be honest I think job openings and outreach events can be merged.
+
+//
+// MARK: Coffee Chat Information
+//
+const CoffeeChatInfo = struct {
+    people: std.ArrayList(Person),
+    location: location,
+    scheduled: ?time,
+    complete: bool,
+    notes: []const u8,
+};
+
+//
+// MARK: Event Definition
+// Each event corresponds to updating fields in the appropriate information struct
+//
+
+const Event = struct {
+    // metadata
+    id: u64,
+    created_at: time,
+    entryId: u64,
+
+    // data, with corresp. Entry fields to update, using 15210 as a placeholder time
+    type: union(enum) {
+        job_opening: enum {
+            BeginTracking
+            // Entry.job_opening.state.pending = LookingAt
+            ,
+            Applied
+            // Entry.job_opening.state.submitted.{}
+            ,
+            OAReceived
+            // Entry.job_opening.state.oa.status = Received
+            // Entry.job_opening.state.oa.due = 15210
+            // Entry.job_opening.state.oa.notes = "Pre-OA yap"
+            ,
+            OADone
+            // Entry.job_opening.state.oa.status = Complete
+            // Entry.job_opening.state.oa.notes = "Post-OA yap"
+            ,
+            InterviewReceived
+            // Entry.job_opening.state.interview.people = [], add if known
+            // Entry.job_opening.state.interview.location = null, add if known
+            // Entry.job_opening.state.interview.scheduled = null, add if known
+            // Entry.job_opening.state.interview.complete = false
+            // Entry.job_opening.state.interview.notes = "Pre-interview yap"
+            // Entry.job_opening.state.interview.type = Behavioral | Technical | General
+            ,
+            InterviewScheduled
+            // Entry.job_opening.state.interview.people = [add people here]
+            // Entry.job_opening.state.interview.location = "probably remote"
+            // Entry.job_opening.state.interview.scheduled = 15210
+            // Entry.job_opening.state.interview.notes = "More pre-interview yap"
+            //
+            // To handle re-schedulings, just make another InterviewScheduled Event?
+            // Or should I have an InterviewReScheduled Variant?
+            ,
+            InterviewDone
+            // Entry.job_opening.state.interview.complete = true
+            // Entry.job_opening.state.interview.notes = "Post-interview yap"
+            ,
+            OfferReceived
+            // Entry.job_opening.state.offer = Received
+            ,
+            OfferAccepted
+            // Entry.job_opening.state.offer = Accepted
+            ,
+            OfferRejected
+            // Entry.job_opening.state.offer = Rejected
+            ,
+            Rejected
+            // Entry.job_opening.state.noOffer = Rejected
+            ,
+            Withdrawn
+            // Entry.job_opening.state.pending = Withdrawn
+            ,
+        },
+        outreach_event: enum {
+            Applied
+            // Entry.outreach_event.people = [], add if known
+            // Entry.outreach_event.location = null, add if known
+            // Entry.outreach_event.scheduled = null, add if known
+            // Entry.outreach_event.complete = false
+            // Entry.outreach_event.notes = "Pre-event yap"
+            // Entry.outreach_event.state.oa = null
+            ,
+            OAReceived
+            // Entry.outreach_event.state.oa = {.status=Received, due=null or add if known, notes="Pre-OA yap" }
+            ,
+            OADone
+            // Entry.outreach_event.state.oa = {.status=Complete, due=null or add if known, notes="Post-OA yap" }
+            ,
+            Attended
+            // Entry.outreach_event.complete = true
+            // Entry.outreach_event.notes = "Post-event yap"
+            ,
+            Rejected,
+        },
+        coffee_chat: enum {
+            Scheduled
+            // Entry.coffee_chat.people = [], add if known
+            // Entry.coffee_chat.location = null, add if known
+            // Entry.coffee_chat.scheduled = null, add if known
+            // Entry.coffee_chat.complete = false
+            // Entry.coffee_chat.notes = "Pre-chat yap"
+            ,
+            Done
+            // Entry.outreach_event.complete = true
+            // Entry.outreach_event.notes = "Post-chat yap"
+            ,
+        },
+        resume_bucket: void, // submitted, TODO: add string linking to which resume I submitted?
+    },
+};
