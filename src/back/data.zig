@@ -31,6 +31,26 @@ pub const Person = struct {
 // MARK: Entry Definition
 //
 
+pub const Status = enum {
+    // Pending
+    LookingAt,
+    Applied,
+    // Active
+    Interviewing,
+    Scheduled,
+    OfferReceived,
+    // Terminal
+    OfferAccepted,
+    OfferRejected,
+    Rejected,
+    Ghosted,
+    Attended,
+    // Discarded
+    Ignored,
+    Withdrawn,
+    DeadlinePassed,
+};
+
 pub const Entry = struct {
     // metadata
     id: u64,

@@ -18,3 +18,70 @@ The naive approach is is to find the entry for the 15-210 TA job opening, then i
 For now, I'll store everything locally in a JSON-serialized format. But eventually (*after taking 15-445, Database Systems*) I'd like to try to write my own database engine in Zig. I think it'd be cool. So we'll see.
 
 > **Interesting Idea for the Future:** custom Zig DB for Jstarb.
+
+## Final Data Structure Design
+Initially, there was a lot of `Entry`-specific fields that were organized into private sub-structs. But this design pattern is a little annoying to deal with, especially because so many of these things are shared.
+
+### Designing an `Entry`
+
+#### Shared Metadata
+All entries need a unique identifier and their creation date, i.e., when they were added to the database. It is also helpful to track a list of tags.
+```zig
+// metadata
+id: u64,
+created_at: i64,
+tags: [][]const u8,
+```
+
+#### Shared Data
+All entries have a specific `Entry`-type, which is one of
+1. Job Opening
+2. Outreach Event
+3. Coffee Chat
+4. Resume Bucket 
+These are all associated with some company, in some location and at some time. 
+
+It would also be helpful to store links, notes, and a list of useful people related to the `Entry`.
+
+All entries also have a short text title; *this isn't necessarily true for coffee chats and resume buckets, so we'll have the appropriate defaults there.*
+
+Last, we'd ideally like to quickly query any impending deadlines.
+```zig
+// data
+type: enum { JobOpening, OutreachEvent, CoffeeChat, ResumeBucket },
+company: []const u8,
+link: []const u8,
+notes: []const u8,
+location: location,
+people: std.ArrayList(Person), // store interviewers, coffee chat people, or anyone else jotting down
+
+// defaults to "Resume Bucket @ [company_name]" or "Coffee Chat @ [company_name]"
+// but for events and job openings, has a specific name.
+title: []const u8,
+
+deadlines: ?std.ArrayList(struct {
+    due: ?time,
+    item: enum { Application, OA },
+}), // treated as a stack
+```
+
+
+
+#### `Entry`-type-specific Data
+
+#### Table Summary
+To motivate the need for these struct fields, consider these examples below:
+
+- tags: SWE, Startup, Finance, 
+
+|   | Job Opening | Outreach Event | Coffee Chat | Resume Bucket |
+|---|---|---|---|---|
+| title | Google STEP Intern | HRT Explore | Coffee Chat w/ Jump Trading | Resume Drop for Apple |
+| deadlines | Application due in a week, OA due in a week, Upcoming scheduled interview, Offer deadline | OA due in a week, Upcoming scheduled event | Upcoming scheduled chat | - |
+| people | Interviewers, Recruiters | Host, Panelists | Hopefully obvious | - |
+| location | Job Location | Event Location (often Remote) | Coffee Shop @ Carnegie Museum | Career Fair |
+|   |   |   |   |   |
+|   |   |   |   |   |
+
+
+#### Final Definition
