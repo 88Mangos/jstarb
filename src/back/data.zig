@@ -94,6 +94,10 @@ const JobOpeningInfo = struct {
 
 //
 // MARK: Outreach Event Information
+// NOTE: To be honest I think job openings and outreach events could be merged,
+//  but I think I prefer the explicitly different treatment. I swear, if these
+//  companies turn outreach events into whole job applications,
+//  I might just stay j*bless.
 //
 const OutreachEventInfo = struct {
     // cached information for summary statistics
@@ -109,6 +113,8 @@ const OutreachEventInfo = struct {
         // Process of getting the j*b
         submitted: void,
 
+        // most outreach events don't have OAs,
+        // but there are exceptions, e.g., HRT explore
         oa: struct {
             status: enum { Received, Complete },
             due: ?time,
@@ -118,8 +124,6 @@ const OutreachEventInfo = struct {
         rejected: void,
     },
 };
-
-// To be honest I think job openings and outreach events can be merged.
 
 //
 // MARK: Coffee Chat Information
@@ -205,19 +209,21 @@ const Event = struct {
             // Entry.outreach_event.scheduled = null, add if known
             // Entry.outreach_event.complete = false
             // Entry.outreach_event.notes = "Pre-event yap"
-            // Entry.outreach_event.state.oa = null
+            // Entry.outreach_event.state.submitted = {}
             ,
             OAReceived
             // Entry.outreach_event.state.oa = {.status=Received, due=null or add if known, notes="Pre-OA yap" }
             ,
             OADone
-            // Entry.outreach_event.state.oa = {.status=Complete, due=null or add if known, notes="Post-OA yap" }
+            // Entry.outreach_event.state.oa = {.status=Complete, notes="Post-OA yap" }
             ,
             Attended
-            // Entry.outreach_event.complete = true
+            // Entry.outreach_event.state.attended = {}
             // Entry.outreach_event.notes = "Post-event yap"
             ,
-            Rejected,
+            Rejected
+            // Entry.outreach_event.state.rejected = {}
+            ,
         },
         coffee_chat: enum {
             Scheduled
