@@ -1,16 +1,31 @@
 //
 // Implementing Workflow Logic
 //
+const std = @import("std");
+const data = @import("data.zig");
+
+pub const EntryUpdateError = error{InvalidUpdate};
 
 //
 // MARK: Add Entries to DB
 //
 
-fn add_job_application() void {}
+pub fn add_job_opening() data.Entry {}
+pub fn add_outreach_event() data.Entry {}
+pub fn add_coffee_chat() data.Entry {}
+pub fn add_resume_bucket() data.Entry {}
 
 //
-// MARK: Update DB Entries
+// MARK: Updates
+// NOTE: there are no workflows for updating resume buckets,
+//  since you just submit a resume and that's that.
 //
+
+//
+// MARK: Update Job Openings
+//
+
+pub fn update_job_opening() EntryUpdateError!void {}
 
 // if it's been too long since last new new ledger entry...
 
@@ -23,5 +38,20 @@ fn add_job_application() void {}
 //  Entry.job_opening.state.noOffer = Ghosted
 
 //
+// MARK: Update Outreach Events
+//
+pub fn update_outreach_event() EntryUpdateError!void {}
+
+//
+// MARK: Update Coffee Chats
+//
+pub fn update_coffee_chat() EntryUpdateError!void {}
+
+//
 // MARK: Query DB Entries for Charts
+//
+
+//
+// MARK: Tests for Actions
+//  Using the testing.allocator we can simulate the frontend sending payloads over
 //
