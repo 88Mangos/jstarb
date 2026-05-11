@@ -14,7 +14,7 @@ pub fn main(init: std.process.Init) !void {
     const arena: std.mem.Allocator = init.arena.allocator();
 
     // TODO: Read in all existing entries from the database
-    const db = std.MultiArrayList(d.Entry).init(arena.allocator());
+    const db = std.ArrayList(d.Entry).init(arena.allocator());
 
     // Initialize a new actions Manager with the existing entries
     const mgr = m.Manager.init(arena, db);

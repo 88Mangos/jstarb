@@ -5,7 +5,7 @@ The intended usage pattern is that the app is spun up, the manager is initialize
 # `Manager` Struct
 - arena allocator that allocates and frees strings during reading in entries and writing out entries 
 - `ArrayList` of `Entry`, or using Data-Oriented Design:
-  - Instead of storing an array of structs, I could store a struct of arrays using `std.MultiArrayList`
+  - Instead of storing an array of structs, I could store a struct of arrays using `std.MultiArrayList`. But this is actually an overoptimization because we're reading entire events and entries at a time, not updating all entries simultaneously. So a standard ArrayList is better for cache locality here.
 - the number of entries and events, if only to have methods to produce fresh entry ids and events. I'd rather not use UUIDs.
 - future work: may or may not consider doing concurrent updates? Where one manager handles several entry lists? 
 

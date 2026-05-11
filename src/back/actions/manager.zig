@@ -3,13 +3,13 @@ const d = @import("../data.zig");
 
 pub const Manager = struct {
     arena: std.heap.ArenaAllocator,
-    entries: std.MultiArrayList(d.Entry),
+    entries: std.ArrayList(d.Entry),
 
     // for creating fresh Entry/Update ids
     n_entries: u64,
     n_updates: u64,
 
-    pub fn init(arena: std.heap.ArenaAllocator, db: std.MultiArrayList(d.Entry)) Manager {
+    pub fn init(arena: std.heap.ArenaAllocator, db: std.ArrayList(d.Entry)) Manager {
         return .{
             .arena = arena,
             .entries = db,
@@ -42,7 +42,7 @@ pub const Manager = struct {
             .id = self.freshEntryId(),
             .created_at = std.time.timestamp(),
             .status = .Pending,
-            .ledger = std.MultiArrayList(d.Entry).init(self.arena.allocator()),
+            .ledger = std.ArrayList(d.Entry).init(self.arena.allocator()),
             // everything else initialized to defaults
         };
         try self.entries.append(entry);
@@ -55,6 +55,8 @@ pub const Manager = struct {
         return d.Update{
             .id = self.freshUpdateId(),
             .created_at = std.time.timestamp(),
+            .action = .Ignore,
+            .item = null,
             // everything else initialized to defaults
         };
     }

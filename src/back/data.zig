@@ -43,7 +43,7 @@ pub const Entry = struct {
     link: []const u8,
     notes: []const u8,
 
-    ledger: std.MultiArrayList(Update),
+    ledger: std.ArrayList(Update),
 
     // EntryType specific information
     info: union(enum) {
