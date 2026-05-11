@@ -29,10 +29,17 @@ const Person = struct {
 // MARK: Entry Definition
 //
 
-pub const Status = enum {};
+pub const Status = enum { Pending, Active, Terminal, Discarded };
+pub const EntryType = enum { Position, Event, Chat, Bucket };
 
 pub const Entry = struct {
-    ledger: std.ArrayList(Event),
+    ledger: std.MultiArrayList(Event),
+
+    pub fn init() Entry {}
+    pub fn deinit() !void {}
 };
 
-pub const Event = struct {};
+pub const Event = struct {
+    pub fn init() Event {}
+    pub fn deinit() !void {}
+};
