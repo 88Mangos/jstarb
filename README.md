@@ -1,7 +1,7 @@
 # J*b (Jstarb): Tyler's Personal Career Tracker
 ```sh
 src/
-├── main.zig          # Entrypoint: Init Raylib + DB, run loop. 
+├── main.zig          # entrypoint: Init Raylib + DB, run loop. 
 ├── root.zig          # Top-level exports. 
 ├── back/
 │   ├── data.zig      # Data Structures for Entries/Events 
