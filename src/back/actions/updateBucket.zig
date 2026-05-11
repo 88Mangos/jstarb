@@ -19,7 +19,7 @@ pub fn new(
 
 pub fn submit(mgr: *m.Manager, t: *d.Entry) !void {
     var u = mgr.newUpdate();
-    u.verb = .Submit;
+    u.action = .Submit;
     u.item = .Resume;
 
     try t.ledger.append(u);

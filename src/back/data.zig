@@ -70,30 +70,32 @@ pub const Entry = struct {
 //  e.g., rescheduling an interview is usually because of the interviewer (company),
 //  but the user is responsible for doing that reschedule.
 //
+pub const Action = enum {
+    // Company Actions
+    Received,
+    Ghosted,
+    Offered,
+    Rejected,
+    Rescinded,
+
+    // User Actions
+    Schedule,
+    Reschedule,
+    Complete,
+    Accept,
+    Reject,
+    Reneg,
+    Submit,
+    Ignore,
+
+    // Manual updates
+    UpdateEntry,
+};
+
 pub const Update = struct {
     id: u64,
     created_at: i64,
-    verb: enum {
-        // Company Actions
-        Received,
-        Ghosted,
-        Offered,
-        Rejected,
-        Rescinded,
-
-        // User Actions
-        Schedule,
-        Reschedule,
-        Complete,
-        Accept,
-        Reject,
-        Reneg,
-        Submit,
-        Ignore,
-
-        // Manual updates
-        UpdateEntry,
-    },
+    action: Action,
     item: ?enum { OA, Interview, Offer, Resume },
     // using reflection to figure out the function call that created this event
 

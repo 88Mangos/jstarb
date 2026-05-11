@@ -68,7 +68,7 @@ pub const Manager = struct {
         // to modify all fields in struct Entry
     ) !void {
         var u = self.newUpdate();
-        u.verb = .UpdateEntry;
+        u.action = .UpdateEntry;
         u.item = null;
 
         try entry.ledger.append(u);
