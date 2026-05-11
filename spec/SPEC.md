@@ -7,6 +7,7 @@ The intended usage pattern is that the app is spun up, the manager is initialize
 - `ArrayList` of `Entry`, or using Data-Oriented Design:
   - Instead of storing an array of structs, I could store a struct of arrays using `std.MultiArrayList`
 - the number of entries and events, if only to have methods to produce fresh entry ids and events. I'd rather not use UUIDs.
+- future work: may or may not consider doing concurrent updates? Where one manager handles several entry lists? 
 
 # `Status` Enum
 should have an underlying integer type so we can make these things comparable, and maybe with some funny gimmick (e.g., making all pending things a multiple of 2, and terminals a multiple of 3 or smth) we can easily categorize the status enum into higher level status categories. I mean pending is p easy, just check if its nonzero and also less than Rejected/Offered/Ghosted yk.
