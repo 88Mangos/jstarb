@@ -7,16 +7,17 @@ pub const Manager = struct {
 
     // for creating fresh Entry/Update ids
     n_entries: u64,
-    n_events: u64,
+    n_updates: u64,
 
-    pub fn init(child_allocator: std.mem.Allocator) Manager {
+    pub fn init(arena: std.heap.ArenaAllocator, db: std.MultiArrayList(d.Entry)) Manager {
         return .{
-            .arena = std.heap.ArenaAllocator.init(child_allocator),
-            .entries = std.MultiArrayList(d.Entry).init(child_allocator),
+            .arena = arena,
+            .entries = db,
             .n_entries = 0,
-            .n_events = 0,
+            .n_updates = 0,
         };
     }
+
     pub fn deinit(self: *Manager) void {
         for (self.entries.items) |*entry| {
             entry.deinit(self.allocator); // Free strings and ledger
@@ -31,18 +32,25 @@ pub const Manager = struct {
     }
 
     fn freshUpdateId(self: *Manager) u64 {
-        self.n_events += 1;
-        return self.n_events;
+        self.n_updates += 1;
+        return self.n_updates;
     }
 
-    pub fn newEntry(self: *Manager) d.Entry {
-        return d.Entry{
+    // updates manager entry list and entry id counter
+    pub fn newEntry(self: *Manager) !*d.Entry {
+        const entry = d.Entry{
             .id = self.freshEntryId(),
             .created_at = std.time.timestamp(),
             .status = .Pending,
+            .ledger = std.MultiArrayList(d.Entry).init(self.arena.allocator()),
             // everything else initialized to defaults
         };
+        try self.entries.append(entry);
+
+        return &(self.entries[self.n_entries - 1]);
     }
+
+    // updates manager update id counter
     pub fn newUpdate(self: *Manager) d.Update {
         return d.Update{
             .id = self.freshUpdateId(),
