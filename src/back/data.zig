@@ -29,10 +29,24 @@ const Person = struct {
 // MARK: Entry Definition
 //
 
-pub const Status = enum { Pending, Active, Terminal, Discarded };
+pub const EntryStatus = enum { Pending, Active, Terminal, Discarded };
 pub const EntryType = enum { Position, Event, Chat, Bucket };
 
 pub const Entry = struct {
+    // metadata
+    id: u64,
+    created_at: i64,
+    tags: [][]const u8,
+
+    // entry data
+    title: []const u8,
+    type: EntryType,
+    status: EntryStatus,
+    company: []const u8,
+
+    link: []const u8,
+    notes: []const u8,
+
     ledger: std.MultiArrayList(Event),
 
     pub fn init() Entry {}
@@ -40,6 +54,10 @@ pub const Entry = struct {
 };
 
 pub const Event = struct {
+    id: u64,
+    created_at: i64,
+    // using reflection to figure out the function call that created this event
+
     pub fn init() Event {}
     pub fn deinit() !void {}
 };

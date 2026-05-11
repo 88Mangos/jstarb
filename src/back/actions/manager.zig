@@ -5,13 +5,49 @@ pub const Manager = struct {
     arena: std.heap.ArenaAllocator,
     entries: std.MultiArrayList(d.Entry),
 
-    // creating fresh Entry/Event ids
+    // for creating fresh Entry/Event ids
     n_entries: u64,
     n_events: u64,
 
-    pub fn init() Manager {}
-    pub fn deinit() !void {}
+    pub fn init(child_allocator: std.mem.Allocator) Manager {
+        return .{
+            .arena = std.heap.ArenaAllocator.init(child_allocator),
+            .entries = std.MultiArrayList(d.Entry).init(child_allocator),
+            .n_entries = 0,
+            .n_events = 0,
+        };
+    }
+    pub fn deinit(self: *Manager) void {
+        for (self.entries.items) |*entry| {
+            entry.deinit(self.allocator); // Free strings and ledger
+        }
+        self.entries.deinit();
+        self.arena.deinit();
+    }
 
-    pub fn freshEntryId() u64 {}
-    pub fn freshEventId() u64 {}
+    fn freshEntryId(self: *Manager) u64 {
+        self.n_entries += 1;
+        return self.n_entries;
+    }
+
+    fn freshEventId(self: *Manager) u64 {
+        self.n_events += 1;
+        return self.n_events;
+    }
+
+    pub fn newEntry(self: *Manager) d.Entry {
+        return d.Entry{
+            .id = self.freshEntryId(),
+            .created_at = std.time.timestamp(),
+            .status = .Pending,
+            // everything else initialized to defaults
+        };
+    }
+    pub fn newEvent(self: *Manager) d.Event {
+        return d.Event{
+            .id = self.freshEventId(),
+            .created_at = std.time.timestamp(),
+            // everything else initialized to defaults
+        };
+    }
 };
