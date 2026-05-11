@@ -5,7 +5,7 @@ pub const Manager = struct {
     arena: std.heap.ArenaAllocator,
     entries: std.MultiArrayList(d.Entry),
 
-    // for creating fresh Entry/Event ids
+    // for creating fresh Entry/Update ids
     n_entries: u64,
     n_events: u64,
 
@@ -30,7 +30,7 @@ pub const Manager = struct {
         return self.n_entries;
     }
 
-    fn freshEventId(self: *Manager) u64 {
+    fn freshUpdateId(self: *Manager) u64 {
         self.n_events += 1;
         return self.n_events;
     }
@@ -43,9 +43,9 @@ pub const Manager = struct {
             // everything else initialized to defaults
         };
     }
-    pub fn newEvent(self: *Manager) d.Event {
-        return d.Event{
-            .id = self.freshEventId(),
+    pub fn newUpdate(self: *Manager) d.Update {
+        return d.Update{
+            .id = self.freshUpdateId(),
             .created_at = std.time.timestamp(),
             // everything else initialized to defaults
         };

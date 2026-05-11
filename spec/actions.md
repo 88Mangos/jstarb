@@ -13,7 +13,7 @@ Determining what actions the user will do also determines the buttons/workflows 
 7. (optional) application due date 
 8. (optional) people related to the job, e.g., friends who worked there before or a recruiter
 
-*I just applied to some networking event for company X.* The user inputs the same as the first query, except the position title corresponds to an event name (e.g., Company X Outreach Event), and the type is automatically set to Event.
+*I just applied to some networking event for company X.* The user inputs the same as the first query, except the position title corresponds to an event name (e.g., Company X Outreach Event), and the type is automatically set to Update.
 
 Weirdly, outreach events are becoming more and more like job applications (there's already some that give OAs, and maybe there could be interviews for these outreach events in the future...), and it makes sense to re-use the notion of an offer being accepted for attending an event.
 
@@ -114,7 +114,7 @@ We may receive several interview rounds, so we can just reuse these actions acco
 
 
 
-#### Unstructured Terminal Events (Rare)
+#### Unstructured Terminal Updates (Rare)
 Hopefully the user does not do these things or does not have these things happen to them. But always prepare.
 
 *I just reneged an offer for a position/event.* The user marks it as such, and inputs 

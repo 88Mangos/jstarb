@@ -4,7 +4,7 @@ src/
 ├── main.zig          # entrypoint: Init Raylib + DB, run loop. 
 ├── root.zig          # Top-level exports. 
 ├── back/
-│   ├── data.zig      # Data Structures for Entries/Events 
+│   ├── data.zig      # Data Structures for Entries/Updates 
 │   ├── state.zig     # Transition Validator (DFA logic). 
 │   ├── storage.zig   # SQLite/JSON serialization logic. 
 │   └── analytics.zig # "Week ID" bucketing & stats calculation. 

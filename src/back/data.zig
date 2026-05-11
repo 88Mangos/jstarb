@@ -47,17 +47,17 @@ pub const Entry = struct {
     link: []const u8,
     notes: []const u8,
 
-    ledger: std.MultiArrayList(Event),
+    ledger: std.MultiArrayList(Update),
 
     pub fn init() Entry {}
     pub fn deinit() !void {}
 };
 
-pub const Event = struct {
+pub const Update = struct {
     id: u64,
     created_at: i64,
     // using reflection to figure out the function call that created this event
 
-    pub fn init() Event {}
+    pub fn init() Update {}
     pub fn deinit() !void {}
 };

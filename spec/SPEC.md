@@ -54,7 +54,7 @@ metadata: id, creation time, tags, notes
 ## Job Openings: `Position`
 
 
-## Outreach Events: `Event`
+## Outreach Updates: `Update`
 
 ## Coffee Chats: `Chat`
 
