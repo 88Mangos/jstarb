@@ -8,13 +8,9 @@
 //
 const std = @import("std");
 
-//
-// MARK: Generic Data Structures: Time, Location, People
-//
+// use Unix Times as i64
 
-const time = i64; // Unix time
-
-const location = []const u8; // right now, locations are just strings.
+const Location = []const u8; // right now, locations are just strings.
 
 const Person = struct {
     first_name: []const u8,
@@ -60,6 +56,14 @@ pub const Entry = struct {
     pub fn deinit() !void {}
 };
 
+pub const ItemType = enum { OA, Interview, Offer, Resume };
+pub const Item = struct {
+    type: ItemType,
+    created_at: i64,
+    deadline: ?i64, // e.g., Offer Deadline, OA due date, Interview scheduled
+    notes: []const u8,
+};
+
 //
 // The actions taken by a company are in the past tense,
 //  e.g., "received" an OA/interview/offer,
@@ -79,8 +83,7 @@ pub const Action = enum {
     Rescinded,
 
     // User Actions
-    Schedule,
-    Reschedule,
+    Schedule, // rescheduling is just another Schedule action
     Complete,
     Accept,
     Reject,
@@ -96,7 +99,7 @@ pub const Update = struct {
     id: u64,
     created_at: i64,
     action: Action,
-    item: ?enum { OA, Interview, Offer, Resume },
+    item: ?Item,
     // using reflection to figure out the function call that created this event
 
     pub fn deinit() !void {}
