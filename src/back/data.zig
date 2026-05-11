@@ -49,6 +49,14 @@ pub const Entry = struct {
 
     ledger: std.MultiArrayList(Update),
 
+    // EntryType specific information
+    info: union(enum) {
+        position: PositionInfo,
+        event: UpdateInfo,
+        chat: ChatInfo,
+        bucket: BucketInfo,
+    },
+
     pub fn deinit() !void {}
 };
 
@@ -90,4 +98,8 @@ pub const Update = struct {
     // using reflection to figure out the function call that created this event
 
     pub fn deinit() !void {}
+};
+
+pub const BucketInfo = struct {
+    resumeId: []const u8, // identifier for which resume was submitted
 };
