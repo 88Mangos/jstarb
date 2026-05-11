@@ -58,4 +58,20 @@ pub const Manager = struct {
             // everything else initialized to defaults
         };
     }
+
+    // manual user updates
+    // TODO: write this last, once the Entry struct has been finalized.
+    pub fn updateManually(
+        self: *Manager,
+        entry: *d.Entry,
+        // plus parameters necessary as optionals
+        // to modify all fields in struct Entry
+    ) !void {
+        var u = self.newUpdate();
+        u.verb = .UpdateEntry;
+        u.item = null;
+
+        try entry.ledger.append(u);
+        return;
+    }
 };

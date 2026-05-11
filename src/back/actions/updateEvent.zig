@@ -3,7 +3,6 @@ const d = @import("../data.zig");
 const m = @import("manager.zig");
 
 pub fn new() !d.Entry {} // begin tracking
-pub fn update() !void {} // manual user updates
 
 pub const oa = struct {
     pub fn received() !void {}
