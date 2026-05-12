@@ -13,6 +13,10 @@ Determining what actions the user will do also determines the buttons/workflows 
 7. (optional) application due date 
 8. (optional) people related to the job, e.g., friends who worked there before or a recruiter
 
+*I just submitted the application for a saved job.* Inputs: Application date, specific resume/cover letter version used, application portal link (if different from the job posting).
+
+*I requested/received a referral.* Inputs: Name of the referrer, contact info, referral status (Requested, Submitted, Confirmed), notes.
+
 *I just applied to some networking event for company X.* The user inputs the same as the first query, except the position title corresponds to an event name (e.g., Company X Outreach Event), and the type is automatically set to Update.
 
 Weirdly, outreach events are becoming more and more like job applications (there's already some that give OAs, and maybe there could be interviews for these outreach events in the future...), and it makes sense to re-use the notion of an offer being accepted for attending an event.
@@ -39,6 +43,8 @@ Weirdly, outreach events are becoming more and more like job applications (there
 1. (optional) OA due date, may be relative (e.g., due within the next 3 weeks, but the user can be smart enough to calculate that themselves...)
 2. (optional) OA link
 3. (optional) notes about the OA
+
+*I just emailed the company and got my OA deadline extended.* The user would provide the new later OA due date, and maybe an updated link.
 
 *I just completed an OA for a position/event.* 
 The user goes to the specific position/event entry and inputs:
@@ -73,9 +79,18 @@ We may receive several interview rounds, so we can just reuse these actions acco
 2. (optional) post-interview notes 
 
 
+*I sent a follow-up/thank-you email.* Inputs: Date sent, recipient(s), context (e.g., "Post-Round 1 Thank You" or "Status check after 2 weeks").
+
+*I sent an expedite/competing offer nudge.* Inputs: Date sent, competing offer deadline provided to the company.
+
+*I was asked to provide references or consent to a background check.* Inputs: Date requested, names of references provided, status of the background check.
+
+
 ### Offers and Attending
 *I just got an offer for a position.* The user marks it as such, and inputs
 1. offer deadline to respond by
+
+*My offer deadline was extended.* Inputs: New deadline date, notes.
 
 *I just got an invited to the event.* The user marks it as such.
 
@@ -124,9 +139,17 @@ Hopefully the user does not do these things or does not have these things happen
 1. (optional) notes, e.g., why they reneged the offer
 **the system needs to update the position's season**
 
+*I am negotiating my offer.* Inputs: Negotiation date, details of the counter-offer (e.g., requesting +$10k base or a sign-on bonus), updated offer deadline if applicable.
+
 *The company just rescinded my offer for a position/event.* The user marks it as such, and inputs 
 1. (optional) notes, e.g., why the company said they rescinded
 
+*I voluntarily withdrew my application.* Inputs: Reason for withdrawing (e.g., "Accepted another offer," "Interview process was too disorganized," "Role changed").
 
-## Automatic Updates
+
+## Other Updates
 *After applying, a position/event has not been updated in X amount of time.* The system automatically marks that entry as ghosted.
+
+*Un-ghosting (Reversing the Automatic Update).* If the system automatically marks a position as "Ghosted" after X time, what happens if the company reaches out on day X+1? The user needs an action to seamlessly bump the application back into "Active" status (e.g., receiving an interview request automatically un-ghosts the entry).
+
+*Delete Entry (Mistake).* Inputs: Confirmation dialog. (Sometimes an entry is just a duplicate or a mistake, which is different from being rejected or withdrawing).
