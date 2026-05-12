@@ -13,12 +13,6 @@ pub fn main(init: std.process.Init) !void {
     // This is appropriate for anything that lives as long as the process.
     const arena: std.mem.Allocator = init.arena.allocator();
 
-    // TODO: Read in all existing entries from the database
-    const db = std.ArrayList(d.Entry).init(arena.allocator());
-
-    // Initialize a new actions Manager with the existing entries
-    const mgr = m.Manager.init(arena, db);
-
     // Accessing command line arguments:
     const args = try init.minimal.args.toSlice(arena);
     for (args) |arg| {
