@@ -8,24 +8,11 @@
 //
 const std = @import("std");
 
-// use Unix Times as i64
-
-const Location = []const u8; // right now, locations are just strings.
-
-const Person = struct {
-    first_name: []const u8,
-    last_name: []const u8,
-    phone: ?[]const u8,
-    email: ?[]const u8,
-    company: ?[]const u8,
-    notes: []const u8,
-};
-
 //
 // MARK: Entry Definition
 //
 
-pub const EntryStatus = enum { Pending, Active, Terminal, Discarded };
+pub const EntryStatus = enum { Bookmarked, Applied, OA, Interviewing, Offered, Rejected, Discarded };
 pub const EntryType = enum { Position, Event, Chat, Bucket };
 
 pub const Entry = struct {
@@ -48,7 +35,7 @@ pub const Entry = struct {
     // EntryType specific information
     info: union(enum) {
         position: PositionInfo,
-        event: UpdateInfo,
+        event: EventInfo,
         chat: ChatInfo,
         bucket: BucketInfo,
     },
@@ -99,11 +86,23 @@ pub const Update = struct {
     id: u64,
     created_at: i64,
     action: Action,
-    item: ?Item,
+    target_item_id: ?u64, // e.g., points to Interview #2
+    notes: []const u8, // Notes specific to this action (e.g., "Aced it")
     // using reflection to figure out the function call that created this event
 
     pub fn deinit() !void {}
 };
+
+pub const PositionInfo = struct {
+    offer: ?Item,
+    interviews: std.ArrayList(Item),
+    oas: std.ArrayList(Item),
+
+    next_deadline: ?i64,
+};
+
+pub const EventInfo = struct {};
+pub const ChatInfo = struct {};
 
 pub const BucketInfo = struct {
     resumeId: []const u8, // identifier for which resume was submitted
